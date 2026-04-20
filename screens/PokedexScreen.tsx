@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPokemons, getPokemonDetails } from '../services/api';
 import { Pokemon } from '../types/Pokemon';
 import { PokemonCard } from '../components/PokemonCard';
@@ -14,6 +15,9 @@ export const PokedexScreen = () => {
     // Lógica do Exercício 3: Estados de paginação
     const [offset, setOffset] = useState(0);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+    // Extraindo a área segura do topo da tela
+    const insets = useSafeAreaInsets();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -92,7 +96,7 @@ export const PokedexScreen = () => {
     // Se estiver carregando pela primeira vez e não tiver dados, mostra o loading grandão
     if (isLoading && pokemons.length === 0) {
         return (
-            <View style={[styles.container, styles.center]}>
+            <View style={[styles.container, styles.center, { paddingTop: insets.top + 20 }]}>
                 <ActivityIndicator size="large" color="#e3350d" />
                 <Text style={styles.loadingText}>Carregando Pokémons...</Text>
             </View>
@@ -101,14 +105,15 @@ export const PokedexScreen = () => {
 
     if (error) {
         return (
-            <View style={[styles.container, styles.center]}>
+            <View style={[styles.container, styles.center, { paddingTop: insets.top + 20 }]}>
                 <Text style={styles.errorText}>{error}</Text>
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
+        /* Aplicando o insets.top dinamicamente no container principal */
+        <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
             <Text style={styles.title}>Pokédex</Text>
             <TextInput
                 placeholder="Buscar pokémon..."
@@ -133,7 +138,8 @@ export const PokedexScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, paddingTop: 60, paddingHorizontal: 16 },
+    /* O paddingTop fixo de 60 foi removido daqui */
+    container: { flex: 1, paddingHorizontal: 16 },
     center: { justifyContent: 'center', alignItems: 'center' },
     centerList: { flexGrow: 1, justifyContent: 'center' },
     title: { fontSize: 32, fontWeight: 'bold', marginBottom: 12 },

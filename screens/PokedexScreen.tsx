@@ -11,13 +11,17 @@ export const PokedexScreen = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
+    // Lógica do Exercício 3: Estados de paginação
+    const [offset, setOffset] = useState(0);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setIsLoading(true);
                 setError('');
 
-                const list = await getPokemons(30);
+                const list = await getPokemons(30, 0); // Começa do zero
                 const details = await Promise.all(list.map(p => getPokemonDetails(p.url)));
                 setPokemons(details);
 
@@ -30,6 +34,29 @@ export const PokedexScreen = () => {
 
         fetchData();
     }, []);
+
+    // Lógica do Exercício 3: Buscar mais Pokémons
+    const loadMorePokemons = async () => {
+        // Evita chamadas duplas e não busca se o usuário estiver pesquisando algo específico
+        if (isFetchingMore || isLoading || search.trim() !== '') return;
+
+        try {
+            setIsFetchingMore(true);
+            const newOffset = offset + 30;
+
+            const list = await getPokemons(30, newOffset);
+            const details = await Promise.all(list.map(p => getPokemonDetails(p.url)));
+
+            // Junta os antigos com os novos
+            setPokemons(prev => [...prev, ...details]);
+            setOffset(newOffset);
+
+        } catch (err) {
+            console.error("Erro ao buscar mais Pokémons", err);
+        } finally {
+            setIsFetchingMore(false);
+        }
+    };
 
     const filtered = pokemons.filter(p => p.name.includes(search.toLowerCase()));
 
@@ -48,6 +75,16 @@ export const PokedexScreen = () => {
         return (
             <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>Nenhum Pokémon para exibir no momento.</Text>
+            </View>
+        );
+    };
+
+    // Lógica do Exercício 3: Loading de rodapé
+    const renderFooter = () => {
+        if (!isFetchingMore) return null;
+        return (
+            <View style={styles.footerLoading}>
+                <ActivityIndicator size="small" color="#e3350d" />
             </View>
         );
     };
@@ -85,6 +122,11 @@ export const PokedexScreen = () => {
                 renderItem={({ item }) => <PokemonCard pokemon={item} />}
                 ListEmptyComponent={renderEmptyList}
                 contentContainerStyle={filtered.length === 0 ? styles.centerList : undefined}
+
+                // Propriedades do Exercício 3
+                onEndReached={loadMorePokemons}
+                onEndReachedThreshold={0.1} // Dispara quando chegar a 10% do fim da lista
+                ListFooterComponent={renderFooter}
             />
         </View>
     );
@@ -105,4 +147,5 @@ const styles = StyleSheet.create({
     errorText: { color: 'red', textAlign: 'center', fontSize: 16 },
     emptyContainer: { alignItems: 'center', padding: 20 },
     emptyText: { fontSize: 16, color: '#666', textAlign: 'center' },
+    footerLoading: { paddingVertical: 20, alignItems: 'center' },
 });

@@ -33,7 +33,27 @@ export const PokedexScreen = () => {
 
     const filtered = pokemons.filter(p => p.name.includes(search.toLowerCase()));
 
-    if (isLoading) {
+    // Lógica do Exercício 2: Renderiza a mensagem de lista vazia
+    const renderEmptyList = () => {
+        if (isLoading) return null;
+
+        if (search.trim() !== '') {
+            return (
+                <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>Nenhum Pokémon encontrado para '{search}'</Text>
+                </View>
+            );
+        }
+
+        return (
+            <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>Nenhum Pokémon para exibir no momento.</Text>
+            </View>
+        );
+    };
+
+    // Se estiver carregando pela primeira vez e não tiver dados, mostra o loading grandão
+    if (isLoading && pokemons.length === 0) {
         return (
             <View style={[styles.container, styles.center]}>
                 <ActivityIndicator size="large" color="#e3350d" />
@@ -63,6 +83,8 @@ export const PokedexScreen = () => {
                 keyExtractor={item => item.id.toString()}
                 numColumns={2}
                 renderItem={({ item }) => <PokemonCard pokemon={item} />}
+                ListEmptyComponent={renderEmptyList}
+                contentContainerStyle={filtered.length === 0 ? styles.centerList : undefined}
             />
         </View>
     );
@@ -71,6 +93,7 @@ export const PokedexScreen = () => {
 const styles = StyleSheet.create({
     container: { flex: 1, paddingTop: 60, paddingHorizontal: 16 },
     center: { justifyContent: 'center', alignItems: 'center' },
+    centerList: { flexGrow: 1, justifyContent: 'center' },
     title: { fontSize: 32, fontWeight: 'bold', marginBottom: 12 },
     input: {
         backgroundColor: '#f1f1f1',
@@ -80,4 +103,6 @@ const styles = StyleSheet.create({
     },
     loadingText: { marginTop: 10, fontSize: 16, color: '#333' },
     errorText: { color: 'red', textAlign: 'center', fontSize: 16 },
+    emptyContainer: { alignItems: 'center', padding: 20 },
+    emptyText: { fontSize: 16, color: '#666', textAlign: 'center' },
 });

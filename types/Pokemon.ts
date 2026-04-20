@@ -8,4 +8,11 @@ export interface Pokemon {
     name: string;
     image: string;
     types: string[];
+    weight: number;
+    height: number;
 }
+
+export type RootStackParamList = {
+    Home: undefined;
+    Details: { pokemon: Pokemon };
+};

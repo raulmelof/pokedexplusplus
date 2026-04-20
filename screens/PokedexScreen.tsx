@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, FlatList, TextInput, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { getPokemons, getPokemonDetails } from '../services/api';
 import { Pokemon } from '../types/Pokemon';
 import { PokemonCard } from '../components/PokemonCard';
+
 
 export const PokedexScreen = () => {
     const [pokemons, setPokemons] = useState<Pokemon[]>([]);
@@ -16,16 +16,13 @@ export const PokedexScreen = () => {
     const [offset, setOffset] = useState(0);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
 
-    // Extraindo a área segura do topo da tela
-    const insets = useSafeAreaInsets();
-
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setIsLoading(true);
                 setError('');
 
-                const list = await getPokemons(30, 0); // Começa do zero
+                const list = await getPokemons(30, 0);
                 const details = await Promise.all(list.map(p => getPokemonDetails(p.url)));
                 setPokemons(details);
 
@@ -83,20 +80,10 @@ export const PokedexScreen = () => {
         );
     };
 
-    // Lógica do Exercício 3: Loading de rodapé
-    const renderFooter = () => {
-        if (!isFetchingMore) return null;
-        return (
-            <View style={styles.footerLoading}>
-                <ActivityIndicator size="small" color="#e3350d" />
-            </View>
-        );
-    };
-
     // Se estiver carregando pela primeira vez e não tiver dados, mostra o loading grandão
     if (isLoading && pokemons.length === 0) {
         return (
-            <View style={[styles.container, styles.center, { paddingTop: insets.top + 20 }]}>
+            <View style={[styles.container, styles.center]}>
                 <ActivityIndicator size="large" color="#e3350d" />
                 <Text style={styles.loadingText}>Carregando Pokémons...</Text>
             </View>
@@ -105,15 +92,14 @@ export const PokedexScreen = () => {
 
     if (error) {
         return (
-            <View style={[styles.container, styles.center, { paddingTop: insets.top + 20 }]}>
+            <View style={[styles.container, styles.center]}>
                 <Text style={styles.errorText}>{error}</Text>
             </View>
         );
     }
 
     return (
-        /* Aplicando o insets.top dinamicamente no container principal */
-        <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+        <View style={[styles.container, { paddingTop: 20 }]}>
             <Text style={styles.title}>Pokédex</Text>
             <TextInput
                 placeholder="Buscar pokémon..."
@@ -126,12 +112,23 @@ export const PokedexScreen = () => {
                 numColumns={2}
                 renderItem={({ item }) => <PokemonCard pokemon={item} />}
                 ListEmptyComponent={renderEmptyList}
-                contentContainerStyle={filtered.length === 0 ? styles.centerList : undefined}
+                style={{ flex: 1 }}
+                contentContainerStyle={[
+                    filtered.length === 0 ? styles.centerList : undefined,
+                    { paddingBottom: 40 }
+                ]}
 
                 // Propriedades do Exercício 3
                 onEndReached={loadMorePokemons}
-                onEndReachedThreshold={0.1} // Dispara quando chegar a 10% do fim da lista
-                ListFooterComponent={renderFooter}
+                onEndReachedThreshold={0.1}
+                ListFooterComponent={
+                    isFetchingMore ? (
+                        <View style={styles.footerLoading}>
+                            <ActivityIndicator size="small" color="#e3350d" />
+                        </View>
+                    ) : null
+                }
+                showsVerticalScrollIndicator={true}
             />
         </View>
     );
@@ -139,7 +136,12 @@ export const PokedexScreen = () => {
 
 const styles = StyleSheet.create({
     /* O paddingTop fixo de 60 foi removido daqui */
-    container: { flex: 1, paddingHorizontal: 16 },
+    container: {
+        flex: 1,
+        paddingHorizontal: 16,
+        height: (Platform.OS === 'web' ? '100vh' : '100%') as any,
+        overflow: 'hidden'
+    },
     center: { justifyContent: 'center', alignItems: 'center' },
     centerList: { flexGrow: 1, justifyContent: 'center' },
     title: { fontSize: 32, fontWeight: 'bold', marginBottom: 12 },
